@@ -27,7 +27,7 @@ public class FileSyncWriter implements SinkWriter<SeaTunnelRow, FileCommitInfo, 
     public FileSyncWriter(FileSync sinkInfo) {
         //设置参数
         this.sinkInfo = sinkInfo;
-        sinkClient = ClientUtil.getClient(sinkInfo);
+        sinkClient = ClientUtil.createClient(sinkInfo);
     }
 
     @Override
@@ -54,7 +54,7 @@ public class FileSyncWriter implements SinkWriter<SeaTunnelRow, FileCommitInfo, 
             HelpClient sourceClient = global_map.get(entity.getId());
             FileSync sourceInfo = entity.getFileSync();;
             if (sourceClient == null) {
-                sourceClient = ClientUtil.getClient(sourceInfo);
+                sourceClient = ClientUtil.createClient(sourceInfo);
                 global_map.put(entity.getId(), sourceClient);
             }
             String sourcePath = entity.getFilePath();

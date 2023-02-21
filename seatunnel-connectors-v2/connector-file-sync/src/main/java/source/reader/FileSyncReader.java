@@ -15,20 +15,21 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
-public class SftpSyncReader implements SourceReader<SeaTunnelRow, SingleSplit> {
-
+public class FileSyncReader implements SourceReader<SeaTunnelRow, SingleSplit> {
+    private final SourceReader.Context context;
     private HelpClient client;
     private final FileSync info;
     private ObjectMapper objectMapper;
 
-    public SftpSyncReader (FileSync info) {
+    public FileSyncReader(SourceReader.Context context, FileSync info) {
+        this.context = context;
         //设置参数
         this.info = info;
     }
 
     @Override
     public void open() throws Exception {
-        client = ClientUtil.getClient(info);
+        client = ClientUtil.createClient(info);
         objectMapper = new ObjectMapper();
     }
 
@@ -50,6 +51,7 @@ public class SftpSyncReader implements SourceReader<SeaTunnelRow, SingleSplit> {
             entity.setFileSync(info);
             output.collect(new SeaTunnelRow(new Object[]{objectMapper.writeValueAsString(entity)}));
         }
+        context.signalNoMoreElement();
     }
 
     @Override
@@ -64,7 +66,6 @@ public class SftpSyncReader implements SourceReader<SeaTunnelRow, SingleSplit> {
 
     @Override
     public void handleNoMoreSplits() {
-
     }
 
     @Override

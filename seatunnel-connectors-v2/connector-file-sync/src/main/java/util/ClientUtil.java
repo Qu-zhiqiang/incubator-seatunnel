@@ -6,7 +6,7 @@ import config.FileSync;
 
 public class ClientUtil {
 
-    public static HelpClient getClient(FileSync info) {
+    public static HelpClient createClient(FileSync info) {
         switch (info.getServerType()) {
             case "SFTP": return new SFTPClient(info);
             case "FTP": return new SFTPClient(info);

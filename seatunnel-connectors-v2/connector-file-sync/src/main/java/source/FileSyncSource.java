@@ -17,7 +17,7 @@ import org.apache.seatunnel.shade.com.typesafe.config.Config;
 import com.google.auto.service.AutoService;
 import config.FileSync;
 import config.FileSyncConfig;
-import source.reader.SftpSyncReader;
+import source.reader.FileSyncReader;
 
 @AutoService(SeaTunnelSource.class)
 public class FileSyncSource implements SeaTunnelSource<SeaTunnelRow, SingleSplit, SingleSplitEnumeratorState> {
@@ -53,7 +53,7 @@ public class FileSyncSource implements SeaTunnelSource<SeaTunnelRow, SingleSplit
 
     @Override
     public SourceReader<SeaTunnelRow, SingleSplit> createReader(SourceReader.Context readerContext) throws Exception {
-        return new SftpSyncReader(info);
+        return new FileSyncReader(readerContext, info);
     }
 
     @Override
