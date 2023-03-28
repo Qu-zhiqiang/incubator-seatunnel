@@ -15,17 +15,16 @@
  * limitations under the License.
  */
 
-package org.apache.seatunnel.connectors.seatunnel.hudi.source;
-
-import org.apache.seatunnel.api.configuration.util.OptionRule;
-import org.apache.seatunnel.api.source.SeaTunnelSource;
-import org.apache.seatunnel.api.table.factory.TableSourceFactory;
-import org.apache.seatunnel.connectors.seatunnel.hudi.config.HudiSourceConfig;
+package org.apache.seatunnel.connectors.seatunnel.hudi.sink;
 
 import com.google.auto.service.AutoService;
+import org.apache.seatunnel.api.configuration.util.OptionRule;
+import org.apache.seatunnel.api.sink.SeaTunnelSink;
+import org.apache.seatunnel.api.table.factory.TableSinkFactory;
+import org.apache.seatunnel.connectors.seatunnel.hudi.config.HudiSourceConfig;
 
-@AutoService(SeaTunnelSource.class)
-public class HudiSourceFactory implements TableSourceFactory {
+@AutoService(SeaTunnelSink.class)
+public class HudiSinkFactory implements TableSinkFactory {
 
     @Override
     public String factoryIdentifier() {

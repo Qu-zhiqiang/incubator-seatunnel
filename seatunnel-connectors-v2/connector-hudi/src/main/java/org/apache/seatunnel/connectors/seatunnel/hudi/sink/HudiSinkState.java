@@ -15,31 +15,11 @@
  * limitations under the License.
  */
 
-package org.apache.seatunnel.connectors.seatunnel.hudi.source;
+package org.apache.seatunnel.connectors.seatunnel.hudi.sink;
 
-import org.apache.seatunnel.api.source.SourceSplit;
 
-import org.apache.hadoop.mapred.InputSplit;
+import java.io.Serializable;
 
-public class HudiSourceSplit implements SourceSplit {
+public class HudiSinkState implements Serializable {
 
-    private static final long serialVersionUID = -1L;
-
-    private final String splitId;
-
-    private final InputSplit inputSplit;
-
-    public HudiSourceSplit(String splitId, InputSplit inputSplit) {
-        this.splitId = splitId;
-        this.inputSplit = inputSplit;
-    }
-
-    @Override
-    public String splitId() {
-        return this.splitId;
-    }
-
-    public InputSplit getInputSplit() {
-        return this.inputSplit;
-    }
 }

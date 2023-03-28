@@ -28,12 +28,21 @@
     <artifactId>connector-hudi</artifactId>
     <properties>
         <hive.exec.version>2.3.9</hive.exec.version>
-        <hudi.version>0.11.1</hudi.version>
+        <hudi.version>0.12.1</hudi.version>
         <commons.lang3.version>3.4</commons.lang3.version>
     </properties>
 
     <dependencies>
-
+        <dependency>
+            <groupId>org.apache.seatunnel</groupId>
+            <artifactId>connector-common</artifactId>
+            <version>2.3.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.78</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
@@ -84,10 +93,28 @@
                     <groupId>org.apache.hadoop</groupId>
                     <artifactId>hadoop-hdfs</artifactId>
                 </exclusion>
+                <exclusion>
+                    <artifactId>avro</artifactId>
+                    <groupId>org.apache.avro</groupId>
+                </exclusion>
             </exclusions>
         </dependency>
-
         <dependency>
+            <groupId>org.apache.hudi</groupId>
+            <artifactId>hudi-examples-common</artifactId>
+            <version>${hudi.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.glassfish</groupId>
+                    <artifactId>javax.el</artifactId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>avro</artifactId>
+                    <groupId>org.apache.avro</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!--<dependency>
             <groupId>org.apache.hudi</groupId>
             <artifactId>hudi-hadoop-mr-bundle</artifactId>
             <exclusions>
@@ -97,12 +124,33 @@
                 </exclusion>
             </exclusions>
             <version>${hudi.version}</version>
-        </dependency>
+        </dependency>-->
 
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>${commons.lang3.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hudi</groupId>
+            <artifactId>hudi-java-client</artifactId>
+            <version>${hudi.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.glassfish</groupId>
+                    <artifactId>javax.el</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro</artifactId>
+            <version>1.10.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.parquet</groupId>
+            <artifactId>parquet-avro</artifactId>
+            <version>1.12.2</version>
         </dependency>
     </dependencies>
 </project>

@@ -15,20 +15,29 @@
  * limitations under the License.
  */
 
-package org.apache.seatunnel.connectors.seatunnel.hudi.source;
+package org.apache.seatunnel.connectors.seatunnel.hudi.commit;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 import java.io.Serializable;
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 
-public class HudiSourceState implements Serializable {
+@Data
+@AllArgsConstructor
+public class HudiAggregatedCommitInfo implements Serializable {
+    /**
+     * Storage the commit info in map.
+     * <p>K is the file path need to be moved to target dir.</p>
+     * <p>V is the target file path of the data file.</p>
+     */
+    private final Map<String, Map<String, String>> transactionMap;
 
-    private final Set<HudiSourceSplit> assignedSplit;
-
-    public HudiSourceState(Set<HudiSourceSplit> assignedSplit) {
-        this.assignedSplit = assignedSplit;
-    }
-
-    public Set<HudiSourceSplit> getAssignedSplit() {
-        return assignedSplit;
-    }
+    /**
+     * Storage the partition information in map.
+     * <p>K is the partition column's name.</p>
+     * <p>V is the list of partition column's values.</p>
+     */
+    private final Map<String, List<String>> partitionDirAndValuesMap;
 }

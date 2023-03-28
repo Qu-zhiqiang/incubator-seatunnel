@@ -544,6 +544,6 @@
     </module>
 
     <module name="SuppressionFilter">
-        <property name="file" value="tools/checkstyle/suppressions.xml" />
+        <property name="file" value="D:/workspace/my-seatunnel/tools/checkstyle/suppressions.xml" />
     </module>
 </module>

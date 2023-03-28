@@ -66,8 +66,8 @@
         <module>connector-openmldb</module>
         <module>connector-doris</module>
         <module>connector-maxcompute</module>
-        <module>connector-fake-new</module>
-        <module>connector-file-sync</module>
+        <!--<module>connector-fake-new</module>
+        <module>connector-file-sync</module>-->
     </modules>
 
     <dependencyManagement>
