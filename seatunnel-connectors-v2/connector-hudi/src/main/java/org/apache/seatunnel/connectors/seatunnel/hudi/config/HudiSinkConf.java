@@ -17,7 +17,7 @@ import java.util.Map;
 @Setter
 public class HudiSinkConf implements Serializable {
 
-    private String scheme;
+    private String schema;
     private String table;
     private String tablePath;
     private int parallelism = 1;

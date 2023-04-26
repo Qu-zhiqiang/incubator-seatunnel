@@ -195,14 +195,11 @@ public class HudiSinkWriter implements SinkWriter<SeaTunnelRow, HudiCommitInfo, 
             for (String key : sinkConf.getFields().keySet()) {
                 genericRecord.put(key, getValueByName(row, key));
             }
-            System.out.println("tableFormat:" + tableFormat);
-            System.out.println("当前值:" + genericRecord);
             HoodieKey hoodieKey = new HoodieKey(String.valueOf(id), sinkConf.getPartitionKeys().stream().map(
                     p->String.format("%s=%s",p, getValueByName(row, p))).collect(Collectors.joining("/")));
             HoodieAvroPayload payload = new HoodieAvroPayload(Option.of(genericRecord));
             return new HoodieAvroRecord<>(hoodieKey, payload).newInstance();
         }).collect(Collectors.toList());
-        System.out.println("传输值:" + hoodieRecords);
         List<WriteStatus> result = hudiClient.upsert(hoodieRecords, newCommitTime);
         logger.error("返回结果:" + result);
     }

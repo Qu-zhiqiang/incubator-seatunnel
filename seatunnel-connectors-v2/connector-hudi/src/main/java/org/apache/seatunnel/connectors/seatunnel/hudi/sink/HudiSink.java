@@ -49,7 +49,7 @@ public class HudiSink implements SeaTunnelSink<SeaTunnelRow, HudiSinkState, Hudi
 
     @Override
     public void prepare(Config pluginConfig) throws PrepareFailException {
-        String scheme = pluginConfig.getString("scheme");
+        String schema = pluginConfig.getString("schema");
         String table = pluginConfig.getString("table");
         String basePath = pluginConfig.getString("basePath");
         String primaryKey = pluginConfig.getString("primaryKey");
@@ -58,7 +58,7 @@ public class HudiSink implements SeaTunnelSink<SeaTunnelRow, HudiSinkState, Hudi
         String fields = pluginConfig.getString("fields");
         String flushMaxSize = Optional.ofNullable(pluginConfig.getString("flushMaxSize")).orElse("1000");
         String flushIntervalMills = Optional.ofNullable(pluginConfig.getString("flushIntervalMills")).orElse("3000");
-        sinkConf =  HudiSinkConf.builder().scheme(scheme).table(table).primaryKey(primaryKey)
+        sinkConf =  HudiSinkConf.builder().schema(schema).table(table).primaryKey(primaryKey)
             .basePath(basePath).flushMaxSize(Integer.parseInt(flushMaxSize))
             .flushIntervalMills(Long.parseLong(flushIntervalMills))
             .tablePath(tablePath)
