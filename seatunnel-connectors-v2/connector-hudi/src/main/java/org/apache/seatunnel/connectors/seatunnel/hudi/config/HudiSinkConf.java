@@ -21,7 +21,6 @@ public class HudiSinkConf implements Serializable {
     private String table;
     private String tablePath;
     private int parallelism = 1;
-    private String basePath;
     private String primaryKeys;
     private List<String> partitionKeys;
     private Integer flushMaxSize;

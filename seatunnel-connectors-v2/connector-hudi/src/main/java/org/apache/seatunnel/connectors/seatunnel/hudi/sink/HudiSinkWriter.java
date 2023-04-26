@@ -31,6 +31,7 @@ import org.apache.hudi.common.util.Option;
 import org.apache.hudi.config.*;
 import org.apache.hudi.index.HoodieIndex;
 import org.apache.seatunnel.api.sink.SinkWriter;
+import org.apache.seatunnel.api.table.type.BasicType;
 import org.apache.seatunnel.api.table.type.SeaTunnelRow;
 import org.apache.seatunnel.connectors.seatunnel.hudi.commit.HudiCommitInfo;
 import org.apache.seatunnel.connectors.seatunnel.hudi.config.HudiSinkConf;
@@ -39,10 +40,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class HudiSinkWriter implements SinkWriter<SeaTunnelRow, HudiCommitInfo, HudiSinkState> {
@@ -91,7 +89,7 @@ public class HudiSinkWriter implements SinkWriter<SeaTunnelRow, HudiCommitInfo, 
         conf.set("fs.defaultFS", "HDFS");
         conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
         this.hudiClient = new HoodieJavaWriteClient<>(new HoodieJavaEngineContext(conf), huDiWriteConf);
-        this.queue = new LinkedList<>();
+        this.queue = new ConcurrentLinkedQueue<>();
         this.flushMaxSize = sinkConf.getFlushMaxSize();
         this.positionMap = initPositionMap(sinkConf.getFields());
         this.scheduler = Executors.newScheduledThreadPool(1);
@@ -157,8 +155,18 @@ public class HudiSinkWriter implements SinkWriter<SeaTunnelRow, HudiCommitInfo, 
             case "string":
             case "varchar":
                 return "string";
+            case "int":
+                return "int";
+            case "double":
+                return "double";
+            case "float":
+                return "float";
+            case "short":
+                return "short";
+            case "byte":
+                return "byte";
             default:
-                return type;
+                throw new RuntimeException("暂不支持" + type);
         }
     }
 
@@ -201,7 +209,7 @@ public class HudiSinkWriter implements SinkWriter<SeaTunnelRow, HudiCommitInfo, 
             return new HoodieAvroRecord<>(hoodieKey, payload).newInstance();
         }).collect(Collectors.toList());
         List<WriteStatus> result = hudiClient.upsert(hoodieRecords, newCommitTime);
-        logger.error("返回结果:" + result);
+        logger.info("返回结果:" + result);
     }
 
     private Object getValueByName(SeaTunnelRow row, String name) {

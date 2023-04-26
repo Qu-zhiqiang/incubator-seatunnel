@@ -29,12 +29,9 @@ import org.apache.seatunnel.connectors.seatunnel.hudi.commit.HudiCommitInfo;
 import org.apache.seatunnel.connectors.seatunnel.hudi.commit.HudiSinkAggregatedCommitter;
 import org.apache.seatunnel.connectors.seatunnel.hudi.config.HudiSinkConf;
 import org.apache.seatunnel.shade.com.typesafe.config.Config;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @AutoService(SeaTunnelSink.class)
 public class HudiSink implements SeaTunnelSink<SeaTunnelRow, HudiSinkState, HudiCommitInfo, HudiSinkAggregatedCommitter> {
@@ -51,24 +48,24 @@ public class HudiSink implements SeaTunnelSink<SeaTunnelRow, HudiSinkState, Hudi
     public void prepare(Config pluginConfig) throws PrepareFailException {
         String schema = pluginConfig.getString("schema");
         String table = pluginConfig.getString("table");
-        String basePath = pluginConfig.getString("basePath");
         String primaryKeys = pluginConfig.getString("primaryKeys");
         String partitionKeys = pluginConfig.getString("partitionKeys");
         String tablePath = pluginConfig.getString("tablePath");
         String fields = pluginConfig.getString("fields");
+        String fieldTypes = pluginConfig.getString("field.types");
         String flushMaxSize = Optional.ofNullable(pluginConfig.getString("flushMaxSize")).orElse("1000");
         String flushIntervalMills = Optional.ofNullable(pluginConfig.getString("flushIntervalMills")).orElse("3000");
-        sinkConf =  HudiSinkConf.builder().schema(schema).table(table).primaryKeys(primaryKeys)
-            .basePath(basePath).flushMaxSize(Integer.parseInt(flushMaxSize))
-            .flushIntervalMills(Long.parseLong(flushIntervalMills))
-            .tablePath(tablePath)
-            .partitionKeys(Arrays.asList(partitionKeys.split(",", -1))).build();
-        try {
-            Map<String, String> fieldsMap = new ObjectMapper().readValue(fields, Map.class);
-            sinkConf.setFields(fieldsMap);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        sinkConf =  HudiSinkConf.builder().schema(schema).table(table).primaryKeys(primaryKeys).flushMaxSize(Integer.parseInt(flushMaxSize))
+                .flushIntervalMills(Long.parseLong(flushIntervalMills))
+                .tablePath(tablePath)
+                .partitionKeys(Arrays.asList(partitionKeys.split(",", -1))).build();
+        String[] filedArray = fields.split(",", -1);
+        String[] fieldTypeArray = fieldTypes.split(",", -1);
+        Map<String, String> fieldsMap = new LinkedHashMap<>();
+        for (int i =0;i< filedArray.length; i++) {
+            fieldsMap.put(filedArray[i], fieldTypeArray[i]);
         }
+        sinkConf.setFields(fieldsMap);
     }
 
     @Override
@@ -91,7 +88,7 @@ public class HudiSink implements SeaTunnelSink<SeaTunnelRow, HudiSinkState, Hudi
     }
 
     private SeaTunnelDataType<?> convertType(String type){
-        switch (type){
+        switch (type.toLowerCase()){
             case "bigint":
                 return BasicType.LONG_TYPE;
             case "string":
@@ -99,6 +96,14 @@ public class HudiSink implements SeaTunnelSink<SeaTunnelRow, HudiSinkState, Hudi
                 return BasicType.STRING_TYPE;
             case "int":
                 return BasicType.INT_TYPE;
+            case "double":
+                return BasicType.DOUBLE_TYPE;
+            case "float":
+                return BasicType.FLOAT_TYPE;
+            case "short":
+                return BasicType.SHORT_TYPE;
+            case "byte":
+                return BasicType.BYTE_TYPE;
             default:
                 throw new RuntimeException("暂不支持" + type);
         }
