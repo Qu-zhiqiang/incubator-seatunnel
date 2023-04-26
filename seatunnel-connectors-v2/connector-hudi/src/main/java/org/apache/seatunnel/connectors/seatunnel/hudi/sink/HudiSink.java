@@ -52,13 +52,13 @@ public class HudiSink implements SeaTunnelSink<SeaTunnelRow, HudiSinkState, Hudi
         String schema = pluginConfig.getString("schema");
         String table = pluginConfig.getString("table");
         String basePath = pluginConfig.getString("basePath");
-        String primaryKey = pluginConfig.getString("primaryKey");
+        String primaryKeys = pluginConfig.getString("primaryKeys");
         String partitionKeys = pluginConfig.getString("partitionKeys");
         String tablePath = pluginConfig.getString("tablePath");
         String fields = pluginConfig.getString("fields");
         String flushMaxSize = Optional.ofNullable(pluginConfig.getString("flushMaxSize")).orElse("1000");
         String flushIntervalMills = Optional.ofNullable(pluginConfig.getString("flushIntervalMills")).orElse("3000");
-        sinkConf =  HudiSinkConf.builder().schema(schema).table(table).primaryKey(primaryKey)
+        sinkConf =  HudiSinkConf.builder().schema(schema).table(table).primaryKeys(primaryKeys)
             .basePath(basePath).flushMaxSize(Integer.parseInt(flushMaxSize))
             .flushIntervalMills(Long.parseLong(flushIntervalMills))
             .tablePath(tablePath)

@@ -190,7 +190,7 @@ public class HudiSinkWriter implements SinkWriter<SeaTunnelRow, HudiCommitInfo, 
         String newCommitTime = hudiClient.startCommit();
         Schema avroSchema = new Schema.Parser().parse(tableFormat);
         List<HoodieRecord<HoodieAvroPayload>> hoodieRecords = list.stream().map(row -> {
-            Object id = getValueByName(row, sinkConf.getPrimaryKey());
+            Object id = getValueByName(row, sinkConf.getPrimaryKeys());
             GenericRecord genericRecord = new GenericData.Record(avroSchema);
             for (String key : sinkConf.getFields().keySet()) {
                 genericRecord.put(key, getValueByName(row, key));

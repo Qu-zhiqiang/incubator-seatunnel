@@ -22,7 +22,7 @@ public class HudiSinkConf implements Serializable {
     private String tablePath;
     private int parallelism = 1;
     private String basePath;
-    private String primaryKey;
+    private String primaryKeys;
     private List<String> partitionKeys;
     private Integer flushMaxSize;
     private Long flushIntervalMills;
