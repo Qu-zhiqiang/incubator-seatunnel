@@ -32,7 +32,9 @@ import java.nio.file.Paths;
 public class SeaTunnelEngineExample {
 
     public static void main(String[] args) throws FileNotFoundException, URISyntaxException, CommandException {
-        String configFile = getTestConfigFile("/examples/fake_to_console.conf");
+        System.setProperty("SEATUNNEL_HOME","D:\\work\\seatunnel");
+        System.setProperty("HADOOP_USER_NAME","hdfs");
+        String configFile = getTestConfigFile("/examples/jdbc.conf");
         ClientCommandArgs clientCommandArgs = new ClientCommandArgs();
         clientCommandArgs.setConfigFile(configFile);
         clientCommandArgs.setCheckConfig(false);
