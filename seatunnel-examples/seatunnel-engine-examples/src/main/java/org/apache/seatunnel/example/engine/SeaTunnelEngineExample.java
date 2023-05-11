@@ -34,7 +34,7 @@ public class SeaTunnelEngineExample {
     public static void main(String[] args) throws FileNotFoundException, URISyntaxException, CommandException {
         System.setProperty("SEATUNNEL_HOME","D:\\work\\seatunnel");
         System.setProperty("HADOOP_USER_NAME","hdfs");
-        String configFile = getTestConfigFile("/examples/jdbc.conf");
+        String configFile = getTestConfigFile("/examples/hive.conf");
         ClientCommandArgs clientCommandArgs = new ClientCommandArgs();
         clientCommandArgs.setConfigFile(configFile);
         clientCommandArgs.setCheckConfig(false);

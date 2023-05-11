@@ -55,7 +55,6 @@ public class InceptorSink implements SeaTunnelSink<SeaTunnelRow, InceptorSinkSta
         String temporaryPath = pluginConfig.getString("temporaryPath");
         String table = pluginConfig.getString("table");
         String database = pluginConfig.getString("database");
-        String randomFileName = pluginConfig.getString("randomFileName");
         String fieldDelimiter = pluginConfig.getString("fieldDelimiter");
         String writerPolicy = pluginConfig.getString("writerPolicy");
         String sinkColumns = pluginConfig.getString("sinkColumns");
@@ -65,7 +64,7 @@ public class InceptorSink implements SeaTunnelSink<SeaTunnelRow, InceptorSinkSta
                 .hostUrl(hostUrl)
                 .database(database)
                 .temporaryPath(temporaryPath == null ? DEFAULT_PATH:temporaryPath)
-                .randomFileName(randomFileName == null ? UUID.randomUUID()+".txt" : randomFileName)
+                .randomFileName(UUID.randomUUID()+".txt")
                 .table(table)
                 .hadoopUserName(hadoopUserName == null ? "hdfs": hadoopUserName)
                 .fieldDelimiter(fieldDelimiter)

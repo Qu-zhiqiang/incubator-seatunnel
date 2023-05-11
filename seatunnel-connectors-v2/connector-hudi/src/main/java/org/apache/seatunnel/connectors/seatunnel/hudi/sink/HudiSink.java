@@ -92,6 +92,7 @@ public class HudiSink implements SeaTunnelSink<SeaTunnelRow, HudiSinkState, Hudi
             case "bigint":
                 return BasicType.LONG_TYPE;
             case "string":
+            case "timestamp":
             case "varchar":
                 return BasicType.STRING_TYPE;
             case "int":
