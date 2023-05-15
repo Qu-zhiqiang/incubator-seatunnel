@@ -22,6 +22,7 @@ import static org.apache.parquet.avro.AvroSchemaConverter.ADD_LIST_ELEMENT_RECOR
 import static org.apache.parquet.avro.AvroWriteSupport.WRITE_FIXED_AS_INT96;
 import static org.apache.parquet.avro.AvroWriteSupport.WRITE_OLD_LIST_STRUCTURE;
 
+import org.apache.seatunnel.api.table.type.SeaTunnelDataType;
 import org.apache.seatunnel.api.table.type.SeaTunnelRow;
 import org.apache.seatunnel.api.table.type.SeaTunnelRowType;
 import org.apache.seatunnel.common.Constants;
@@ -62,6 +63,7 @@ public abstract class AbstractWriteStrategy implements WriteStrategy {
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
     protected final FileSinkConfig fileSinkConfig;
     protected final List<Integer> sinkColumnsIndexInRow;
+    protected final Map<String, Integer> sinkColumnsIndexInRowMap;
     protected String jobId;
     protected int subTaskIndex;
     protected HadoopConf hadoopConf;
@@ -83,10 +85,16 @@ public abstract class AbstractWriteStrategy implements WriteStrategy {
     protected int batchSize;
     protected int currentBatchSize = 0;
 
+    protected final List<String> originColumns;
+    protected final List<String> sinkColumns;
+
     public AbstractWriteStrategy(FileSinkConfig fileSinkConfig) {
         this.fileSinkConfig = fileSinkConfig;
         this.sinkColumnsIndexInRow = fileSinkConfig.getSinkColumnsIndexInRow();
+        this.sinkColumnsIndexInRowMap = fileSinkConfig.getSinkColumnsIndexInRowMap();
         this.batchSize = fileSinkConfig.getBatchSize();
+        this.originColumns = fileSinkConfig.getOriginColumnList();
+        this.sinkColumns = fileSinkConfig.getSinkColumnList();
     }
 
     /**
@@ -110,6 +118,29 @@ public abstract class AbstractWriteStrategy implements WriteStrategy {
             beingWrittenFile.clear();
         }
         currentBatchSize++;
+    }
+
+    protected SeaTunnelRowType buildSchemaWithRowType(
+            SeaTunnelRowType seaTunnelRowType, List<Integer> sinkColumnsIndex) {
+        SeaTunnelDataType<?>[] fieldTypes = seaTunnelRowType.getFieldTypes();
+        String[] fieldNames = seaTunnelRowType.getFieldNames();
+        List<String> newFieldNames = new ArrayList<>();
+        List<SeaTunnelDataType<?>> newFieldTypes = new ArrayList<>();
+        for (Integer index : sinkColumnsIndex) {
+            if (index == null) {
+                continue;
+            }
+            newFieldNames.add(fieldNames[index]);
+            newFieldTypes.add(fieldTypes[index]);
+        }
+        /*sinkColumnsIndex.forEach(
+                index -> {
+                    newFieldNames.add(fieldNames[index]);
+                    newFieldTypes.add(fieldTypes[index]);
+                });*/
+        return new SeaTunnelRowType(
+                newFieldNames.toArray(new String[0]),
+                newFieldTypes.toArray(new SeaTunnelDataType[0]));
     }
 
     /**

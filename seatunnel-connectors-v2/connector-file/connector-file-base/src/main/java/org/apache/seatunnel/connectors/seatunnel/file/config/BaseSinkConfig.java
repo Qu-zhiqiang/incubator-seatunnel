@@ -100,6 +100,10 @@ public class BaseSinkConfig {
             .listType()
             .noDefaultValue()
             .withDescription("Which columns need be wrote to file");
+    public static final Option<List<String>> ORIGIN_COLUMNS = Options.key("origin_columns")
+            .listType()
+            .noDefaultValue()
+            .withDescription("Which columns need be wrote to file");
     public static final Option<String> FILENAME_TIME_FORMAT = Options.key("filename_time_format")
             .stringType()
             .defaultValue(DateUtils.Formatter.YYYY_MM_DD_SPOT.getValue())

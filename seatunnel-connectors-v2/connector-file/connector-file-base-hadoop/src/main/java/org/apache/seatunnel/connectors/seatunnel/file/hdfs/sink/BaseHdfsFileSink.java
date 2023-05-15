@@ -18,6 +18,8 @@
 package org.apache.seatunnel.connectors.seatunnel.file.hdfs.sink;
 
 import static org.apache.hadoop.fs.CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY;
+import static org.apache.seatunnel.connectors.seatunnel.file.config.BaseSinkConfig.ORIGIN_COLUMNS;
+import static org.apache.seatunnel.connectors.seatunnel.file.config.BaseSinkConfig.SINK_COLUMNS;
 
 import org.apache.seatunnel.api.common.PrepareFailException;
 import org.apache.seatunnel.api.common.SeaTunnelAPIErrorCode;
@@ -46,5 +48,9 @@ public abstract class BaseHdfsFileSink extends BaseFileSink {
         if (pluginConfig.hasPath(HdfsSourceConfig.HDFS_SITE_PATH.key())) {
             hadoopConf.setHdfsSitePath(pluginConfig.getString(HdfsSourceConfig.HDFS_SITE_PATH.key()));
         }
+        if (pluginConfig.hasPath(ORIGIN_COLUMNS.key())) {
+            hadoopConf.setOriginColumns(pluginConfig.getStringList(ORIGIN_COLUMNS.key()));
+        }
+        hadoopConf.setSinkColumns(pluginConfig.getStringList(SINK_COLUMNS.key()));
     }
 }

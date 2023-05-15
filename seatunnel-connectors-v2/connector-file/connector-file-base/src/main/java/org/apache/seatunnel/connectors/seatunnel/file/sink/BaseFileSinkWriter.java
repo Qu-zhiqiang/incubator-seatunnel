@@ -57,7 +57,6 @@ public class BaseFileSinkWriter implements SinkWriter<SeaTunnelRow, FileCommitIn
         } else {
             uuidPrefix = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 10);
         }
-
         writeStrategy.init(hadoopConf, jobId, uuidPrefix, subTaskIndex);
         if (!fileSinkStates.isEmpty()) {
             try {

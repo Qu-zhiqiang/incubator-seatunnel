@@ -17,13 +17,7 @@
 
 package org.apache.seatunnel.connectors.seatunnel.file.sink.writer;
 
-import org.apache.seatunnel.api.table.type.ArrayType;
-import org.apache.seatunnel.api.table.type.BasicType;
-import org.apache.seatunnel.api.table.type.DecimalType;
-import org.apache.seatunnel.api.table.type.MapType;
-import org.apache.seatunnel.api.table.type.SeaTunnelDataType;
-import org.apache.seatunnel.api.table.type.SeaTunnelRow;
-import org.apache.seatunnel.api.table.type.SeaTunnelRowType;
+import org.apache.seatunnel.api.table.type.*;
 import org.apache.seatunnel.common.exception.CommonErrorCode;
 import org.apache.seatunnel.connectors.seatunnel.file.exception.FileConnectorException;
 import org.apache.seatunnel.connectors.seatunnel.file.sink.config.FileSinkConfig;
@@ -57,14 +51,23 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoField;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class OrcWriteStrategy extends AbstractWriteStrategy {
     private final Map<String, Writer> beingWrittenWriter;
+    private final Map<String, Integer> sinkColumnMap = new HashMap<>();
 
     public OrcWriteStrategy(FileSinkConfig fileSinkConfig) {
         super(fileSinkConfig);
         this.beingWrittenWriter = new HashMap<>();
+        if (originColumns != null) {
+            int index = 0;
+            for (String column : sinkColumns) {
+                sinkColumnMap.put(column.toLowerCase(Locale.ROOT), index);
+                index++;
+            }
+        }
     }
 
     @Override
@@ -72,22 +75,41 @@ public class OrcWriteStrategy extends AbstractWriteStrategy {
         super.write(seaTunnelRow);
         String filePath = getOrCreateFilePathBeingWritten(seaTunnelRow);
         Writer writer = getOrCreateWriter(filePath);
-        TypeDescription schema = buildSchemaWithRowType();
-        VectorizedRowBatch rowBatch = schema.createRowBatch();
-        int i = 0;
-        int row = rowBatch.size++;
-        for (Integer index : sinkColumnsIndexInRow) {
-            Object value = seaTunnelRow.getField(index);
-            ColumnVector vector = rowBatch.cols[i];
-            setColumn(value, vector, row);
-            i++;
-        }
-        try {
-            writer.addRowBatch(rowBatch);
-            rowBatch.reset();
-        } catch (IOException e) {
-            String errorMsg = String.format("Write data to orc file [%s] error", filePath);
-            throw new FileConnectorException(CommonErrorCode.FILE_OPERATION_FAILED, errorMsg, e);
+        if (originColumns != null) {
+            TypeDescription schema = buildSchemaWithOriginColumns();
+            VectorizedRowBatch rowBatch = schema.createRowBatch();
+            int row = rowBatch.size++;
+            for (int index = 0; index < originColumns.size();index++) {
+                ColumnVector vector = rowBatch.cols[index];
+                Integer value = sinkColumnsIndexInRowMap.get(originColumns.get(index).toLowerCase(Locale.ROOT));
+                Object object = value == null ? null : seaTunnelRow.getField(value);
+                setColumn(object, vector, row);
+            }
+            try {
+                writer.addRowBatch(rowBatch);
+                rowBatch.reset();
+            } catch (IOException e) {
+                String errorMsg = String.format("Write data to orc file [%s] error", filePath);
+                throw new FileConnectorException(CommonErrorCode.FILE_OPERATION_FAILED, errorMsg, e);
+            }
+        } else {
+            TypeDescription schema = buildSchemaWithRowType();
+            VectorizedRowBatch rowBatch = schema.createRowBatch();
+            int i = 0;
+            int row = rowBatch.size++;
+            for (Integer index : sinkColumnsIndexInRow) {
+                Object value = seaTunnelRow.getField(index);
+                ColumnVector vector = rowBatch.cols[i];
+                setColumn(value, vector, row);
+                i++;
+            }
+            try {
+                writer.addRowBatch(rowBatch);
+                rowBatch.reset();
+            } catch (IOException e) {
+                String errorMsg = String.format("Write data to orc file [%s] error", filePath);
+                throw new FileConnectorException(CommonErrorCode.FILE_OPERATION_FAILED, errorMsg, e);
+            }
         }
     }
 
@@ -108,7 +130,12 @@ public class OrcWriteStrategy extends AbstractWriteStrategy {
     private Writer getOrCreateWriter(@NonNull String filePath) {
         Writer writer = this.beingWrittenWriter.get(filePath);
         if (writer == null) {
-            TypeDescription schema = buildSchemaWithRowType();
+            TypeDescription schema;
+            if (originColumns == null) {
+                schema = buildSchemaWithRowType();
+            } else {
+                schema = buildSchemaWithOriginColumns();
+            }
             Path path = new Path(filePath);
             try {
                 OrcFile.WriterOptions options = OrcFile.writerOptions(getConfiguration(hadoopConf))
@@ -184,6 +211,23 @@ public class OrcWriteStrategy extends AbstractWriteStrategy {
         for (Integer i : sinkColumnsIndexInRow) {
             TypeDescription fieldType = buildFieldWithRowType(seaTunnelRowType.getFieldType(i));
             schema.addField(seaTunnelRowType.getFieldName(i).toLowerCase(), fieldType);
+        }
+        return schema;
+    }
+
+    private TypeDescription buildSchemaWithOriginColumns() {
+        TypeDescription schema = TypeDescription.createStruct();
+        for (int index=0;index < originColumns.size();index++) {
+            String field = originColumns.get(index).toLowerCase(Locale.ROOT);
+            TypeDescription fieldType = TypeDescription.createString();
+            for (int i=0;i < sinkColumns.size();i++) {
+                if (originColumns.get(index).equalsIgnoreCase(sinkColumns.get(i))) {
+                    fieldType = buildFieldWithRowType(seaTunnelRowType.getFieldType(i));
+                    break;
+                }
+
+            }
+            schema.addField(field, fieldType);
         }
         return schema;
     }

@@ -23,6 +23,8 @@ import org.apache.seatunnel.common.utils.DateTimeUtils;
 import org.apache.seatunnel.common.utils.DateUtils;
 import org.apache.seatunnel.common.utils.TimeUtils;
 
+import java.util.List;
+
 public class BaseSourceConfig {
     public static final Option<String> FILE_TYPE = Options.key("type")
             .stringType()
@@ -56,4 +58,33 @@ public class BaseSourceConfig {
             .stringType()
             .noDefaultValue()
             .withDescription("The path of hdfs-site.xml");
+    public static final Option<String> KERBEROS_PRINCIPAL =
+            Options.key("kerberos_principal")
+                    .stringType()
+                    .noDefaultValue()
+                    .withDescription("Kerberos principal");
+
+    public static final Option<String> KERBEROS_KEYTAB_PATH =
+            Options.key("kerberos_keytab_path")
+                    .stringType()
+                    .noDefaultValue()
+                    .withDescription("Kerberos keytab file path");
+
+    public static final Option<Long> SKIP_HEADER_ROW_NUMBER =
+            Options.key("skip_header_row_number")
+                    .longType()
+                    .defaultValue(0L)
+                    .withDescription("The number of rows to skip");
+
+    public static final Option<List<String>> READ_PARTITIONS =
+            Options.key("read_partitions")
+                    .listType()
+                    .noDefaultValue()
+                    .withDescription("The partitions that the user want to read");
+
+    public static final Option<List<String>> READ_COLUMNS =
+            Options.key("read_columns")
+                    .listType()
+                    .noDefaultValue()
+                    .withDescription("The columns list that the user want to read");
 }

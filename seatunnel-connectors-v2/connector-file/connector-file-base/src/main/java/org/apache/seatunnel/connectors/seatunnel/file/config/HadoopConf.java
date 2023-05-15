@@ -23,6 +23,7 @@ import org.apache.hadoop.fs.Path;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -32,6 +33,24 @@ public class HadoopConf implements Serializable {
     protected Map<String, String> extraOptions = new HashMap<>();
     protected String hdfsNameKey;
     protected String hdfsSitePath;
+    protected List<String> originColumns;
+    protected List<String> sinkColumns;
+
+    public List<String> getOriginColumns() {
+        return originColumns;
+    }
+
+    public void setOriginColumns(List<String> originColumns) {
+        this.originColumns = originColumns;
+    }
+
+    public List<String> getSinkColumns() {
+        return sinkColumns;
+    }
+
+    public void setSinkColumns(List<String> sinkColumns) {
+        this.sinkColumns = sinkColumns;
+    }
 
     public HadoopConf(String hdfsNameKey) {
         this.hdfsNameKey = hdfsNameKey;

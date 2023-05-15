@@ -33,18 +33,11 @@ import lombok.NonNull;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Data
 public class FileSinkConfig extends BaseFileSinkConfig implements PartitionConfig {
-
-    private List<String> sinkColumnList;
 
     private List<String> partitionFieldList;
 
@@ -61,6 +54,7 @@ public class FileSinkConfig extends BaseFileSinkConfig implements PartitionConfi
     //---------------------generator by config params-------------------
 
     private List<Integer> sinkColumnsIndexInRow;
+    private Map<String, Integer> sinkColumnsIndexInRowMap = new HashMap<>();
 
     private List<Integer> partitionFieldsIndexInRow;
 
@@ -71,6 +65,10 @@ public class FileSinkConfig extends BaseFileSinkConfig implements PartitionConfi
         if (config.hasPath(BaseSinkConfig.SINK_COLUMNS.key()) &&
                 !CollectionUtils.isEmpty(config.getStringList(BaseSinkConfig.SINK_COLUMNS.key()))) {
             this.sinkColumnList = config.getStringList(BaseSinkConfig.SINK_COLUMNS.key());
+        }
+        if (config.hasPath(BaseSinkConfig.ORIGIN_COLUMNS.key()) &&
+                !CollectionUtils.isEmpty(config.getStringList(BaseSinkConfig.ORIGIN_COLUMNS.key()))) {
+            this.originColumnList = config.getStringList(BaseSinkConfig.ORIGIN_COLUMNS.key());
         }
 
         // if the config sink_columns is empty, all fields in SeaTunnelRowTypeInfo will being write
@@ -122,10 +120,21 @@ public class FileSinkConfig extends BaseFileSinkConfig implements PartitionConfi
                     "partition fields must in sink columns");
         }
 
+        //移除分区之前先记录下标位置
+        for (int i = 0; i < sinkColumnList.size(); i++) {
+            sinkColumnsIndexInRowMap.put(sinkColumnList.get(i).toLowerCase(), i);
+        }
+
         if (!CollectionUtils.isEmpty(this.partitionFieldList) && !isPartitionFieldWriteInFile) {
             if (!this.sinkColumnList.removeAll(this.partitionFieldList)) {
                 throw new FileConnectorException(CommonErrorCode.ILLEGAL_ARGUMENT,
                         "remove partition field from sink columns error");
+            }
+            //移除map里面的分区字段
+            for(String par : partitionFieldList) {
+                if (sinkColumnsIndexInRowMap.containsKey(par)) {
+                    sinkColumnsIndexInRowMap.remove(par);
+                }
             }
         }
 
@@ -139,16 +148,19 @@ public class FileSinkConfig extends BaseFileSinkConfig implements PartitionConfi
         for (int i = 0; i < fieldNames.length; i++) {
             columnsMap.put(fieldNames[i].toLowerCase(), i);
         }
-
         // init sink column index and partition field index, we will use the column index to found the data in SeaTunnelRow
         this.sinkColumnsIndexInRow = this.sinkColumnList.stream()
-            .map(column -> columnsMap.get(column.toLowerCase()))
+            .map(column -> sinkColumnsIndexInRowMap.get(column.toLowerCase()))
             .collect(Collectors.toList());
 
         if (!CollectionUtils.isEmpty(this.partitionFieldList)) {
             this.partitionFieldsIndexInRow = this.partitionFieldList.stream()
                 .map(columnsMap::get)
                 .collect(Collectors.toList());
+        }
+
+        if (config.hasPath(BaseSinkConfig.ORIGIN_COLUMNS.key())) {
+            this.originColumnList = config.getStringList(BaseSinkConfig.ORIGIN_COLUMNS.key());
         }
     }
 }

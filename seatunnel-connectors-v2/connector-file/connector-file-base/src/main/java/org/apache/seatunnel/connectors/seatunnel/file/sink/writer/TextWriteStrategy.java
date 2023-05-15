@@ -33,6 +33,7 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TextWriteStrategy extends AbstractWriteStrategy {
@@ -59,13 +60,17 @@ public class TextWriteStrategy extends AbstractWriteStrategy {
     @Override
     public void setSeaTunnelRowTypeInfo(SeaTunnelRowType seaTunnelRowType) {
         super.setSeaTunnelRowTypeInfo(seaTunnelRowType);
-        this.serializationSchema = TextSerializationSchema.builder()
-                .seaTunnelRowType(seaTunnelRowType)
-                .delimiter(fieldDelimiter)
-                .dateFormatter(dateFormat)
-                .dateTimeFormatter(dateTimeFormat)
-                .timeFormatter(timeFormat)
-                .build();
+        this.serializationSchema =
+                TextSerializationSchema.builder()
+                        .seaTunnelRowType(
+                                buildSchemaWithRowType(seaTunnelRowType, sinkColumnsIndexInRow))
+                        .delimiter(fieldDelimiter)
+                        .dateFormatter(dateFormat)
+                        .dateTimeFormatter(dateTimeFormat)
+                        .timeFormatter(timeFormat)
+                        .originColumns(originColumns)
+                        .sinkColumns(sinkColumns)
+                        .build();
     }
 
     @Override
@@ -79,30 +84,40 @@ public class TextWriteStrategy extends AbstractWriteStrategy {
             } else {
                 fsDataOutputStream.write(rowDelimiter.getBytes());
             }
-            fsDataOutputStream.write(serializationSchema.serialize(seaTunnelRow));
+            fsDataOutputStream.write(
+                    serializationSchema.serialize(
+                            seaTunnelRow.copy(
+                                    sinkColumnsIndexInRow.stream()
+                                            .mapToInt(Integer::intValue)
+                                            .toArray())));
         } catch (IOException e) {
-            throw new FileConnectorException(CommonErrorCode.FILE_OPERATION_FAILED,
-                    String.format("Write data to file [%s] failed", filePath), e);
+            throw new FileConnectorException(
+                    CommonErrorCode.FILE_OPERATION_FAILED,
+                    String.format("Write data to file [%s] failed", filePath),
+                    e);
         }
     }
 
     @Override
     public void finishAndCloseFile() {
-        beingWrittenOutputStream.forEach((key, value) -> {
-            try {
-                value.flush();
-            } catch (IOException e) {
-                throw new FileConnectorException(CommonErrorCode.FLUSH_DATA_FAILED,
-                        String.format("Flush data to this file [%s] failed", key), e);
-            } finally {
-                try {
-                    value.close();
-                } catch (IOException e) {
-                    log.error("error when close output stream {}", key);
-                }
-            }
-            needMoveFiles.put(key, getTargetLocation(key));
-        });
+        beingWrittenOutputStream.forEach(
+                (key, value) -> {
+                    try {
+                        value.flush();
+                    } catch (IOException e) {
+                        throw new FileConnectorException(
+                                CommonErrorCode.FLUSH_DATA_FAILED,
+                                String.format("Flush data to this file [%s] failed", key),
+                                e);
+                    } finally {
+                        try {
+                            value.close();
+                        } catch (IOException e) {
+                            log.error("error when close output stream {}", key, e);
+                        }
+                    }
+                    needMoveFiles.put(key, getTargetLocation(key));
+                });
         beingWrittenOutputStream.clear();
         isFirstWrite.clear();
     }

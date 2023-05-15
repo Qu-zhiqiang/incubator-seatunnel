@@ -32,6 +32,7 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Locale;
 
 @Data
@@ -47,6 +48,8 @@ public class BaseFileSinkConfig implements DelimiterConfig, CompressConfig, Seri
     protected DateUtils.Formatter dateFormat = DateUtils.Formatter.YYYY_MM_DD;
     protected DateTimeUtils.Formatter datetimeFormat = DateTimeUtils.Formatter.YYYY_MM_DD_HH_MM_SS;
     protected TimeUtils.Formatter timeFormat = TimeUtils.Formatter.HH_MM_SS;
+    protected List<String> sinkColumnList;
+    protected List<String> originColumnList;
 
     public BaseFileSinkConfig(@NonNull Config config) {
         if (config.hasPath(BaseSinkConfig.COMPRESS_CODEC.key())) {

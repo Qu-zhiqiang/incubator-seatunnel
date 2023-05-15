@@ -34,6 +34,7 @@ import lombok.NonNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 
 @Builder
 public class TextSerializationSchema implements SerializationSchema {
@@ -48,17 +49,40 @@ public class TextSerializationSchema implements SerializationSchema {
     @Builder.Default
     private TimeUtils.Formatter timeFormatter = TimeUtils.Formatter.HH_MM_SS;
 
+    @Builder.Default
+    private List<String> originColumns = null;
+
+    @Builder.Default
+    private List<String> sinkColumns = null;
+
     @Override
     public byte[] serialize(SeaTunnelRow element) {
         if (element.getFields().length != seaTunnelRowType.getTotalFields()) {
             throw new IndexOutOfBoundsException("The data does not match the configured schema information, please check");
         }
         Object[] fields = element.getFields();
-        String[] strings = new String[fields.length];
-        for (int i = 0; i < fields.length; i++) {
-            strings[i] = convert(fields[i], seaTunnelRowType.getFieldType(i));
+        if (originColumns != null) {
+            String[] strings = new String[originColumns.size()];
+            for (int i=0;i<originColumns.size();i++) {
+                Object object = null;
+                SeaTunnelDataType seaTunnelDataType = null;
+                for (int index =0; index < sinkColumns.size();index++) {
+                    if (originColumns.get(i).equals(sinkColumns.get(index))) {
+                        object = fields[index];
+                        seaTunnelDataType = seaTunnelRowType.getFieldType(index);
+                        break;
+                    }
+                }
+                strings[i] = convert(object, seaTunnelDataType);
+            }
+            return String.join(delimiter, strings).getBytes();
+        } else {
+            String[] strings = new String[fields.length];
+            for (int i = 0; i < fields.length; i++) {
+                strings[i] = convert(fields[i], seaTunnelRowType.getFieldType(i));
+            }
+            return String.join(delimiter, strings).getBytes();
         }
-        return String.join(delimiter, strings).getBytes();
     }
 
     private String convert(Object field, SeaTunnelDataType<?> fieldType) {
