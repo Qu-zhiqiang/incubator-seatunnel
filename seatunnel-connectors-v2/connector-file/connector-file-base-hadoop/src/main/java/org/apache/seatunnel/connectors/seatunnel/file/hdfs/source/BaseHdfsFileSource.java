@@ -78,8 +78,13 @@ public abstract class BaseHdfsFileSource extends BaseFileSource {
                     break;
                 case ORC:
                 case PARQUET:
-                    throw new FileConnectorException(CommonErrorCode.UNSUPPORTED_OPERATION,
-                            "SeaTunnel does not support user-defined schema for [parquet, orc] files");
+                    Config schemaConfig1 = pluginConfig.getConfig(SeaTunnelSchema.SCHEMA.key());
+                    SeaTunnelRowType userDefinedSchema1 = SeaTunnelSchema
+                            .buildWithConfig(schemaConfig1)
+                            .getSeaTunnelRowType();
+                    readStrategy.setSeaTunnelRowTypeInfo(userDefinedSchema1);
+                    rowType = userDefinedSchema1;
+                    break;
                 default:
                     // never got in there
                     throw new FileConnectorException(CommonErrorCode.ILLEGAL_ARGUMENT,

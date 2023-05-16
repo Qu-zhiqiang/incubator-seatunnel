@@ -76,6 +76,7 @@ public class OrcReadStrategy extends AbstractReadStrategy {
             String errorMsg = String.format("This file [%s] is not a orc file, please check the format of this file", path);
             throw new FileConnectorException(FileConnectorErrorCode.FILE_TYPE_INVALID, errorMsg);
         }
+        String[] readColumns = seaTunnelRowType.getFieldNames();
         Configuration configuration = getConfiguration();
         Path filePath = new Path(path);
         Map<String, String> partitionsMap = parsePartitionsByPath(path);
@@ -84,28 +85,29 @@ public class OrcReadStrategy extends AbstractReadStrategy {
             TypeDescription schema = reader.getSchema();
             List<TypeDescription> children = schema.getChildren();
             RecordReader rows = reader.rows();
+            List<String> originList =  reader.getSchema().getFieldNames();
             VectorizedRowBatch rowBatch = reader.getSchema().createRowBatch();
             while (rows.nextBatch(rowBatch)) {
                 int num = 0;
                 for (int i = 0; i < rowBatch.size; i++) {
                     int numCols = rowBatch.numCols;
-                    Object[] fields;
+                    Map<String, Object> valueMap = new HashMap<>(numCols);
                     if (isMergePartition) {
-                        int index = numCols;
-                        fields = new Object[numCols + partitionsMap.size()];
-                        for (String value : partitionsMap.values()) {
-                            fields[index++] = value;
+                        for (String key : partitionsMap.keySet()) {
+                            valueMap.put(key, partitionsMap.get(key));
                         }
-                    } else {
-                        fields = new Object[numCols];
                     }
                     ColumnVector[] cols = rowBatch.cols;
                     for (int j = 0; j < numCols; j++) {
                         if (cols[j] == null) {
-                            fields[j] = null;
+                            valueMap.put(originList.get(j), null);
                         } else {
-                            fields[j] = readColumn(cols[j], children.get(j), num);
+                            valueMap.put(originList.get(j), readColumn(cols[j], children.get(j), num));
                         }
+                    }
+                    Object[] fields = new Object[readColumns.length];
+                    for (int j = 0; j < readColumns.length; j++) {
+                        fields[j] = valueMap.get(readColumns[j]);
                     }
                     SeaTunnelRow seaTunnelRow = new SeaTunnelRow(fields);
                     output.collect(seaTunnelRow);

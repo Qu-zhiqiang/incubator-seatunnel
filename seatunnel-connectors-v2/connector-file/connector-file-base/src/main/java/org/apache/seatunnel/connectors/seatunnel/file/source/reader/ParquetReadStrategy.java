@@ -17,6 +17,7 @@
 
 package org.apache.seatunnel.connectors.seatunnel.file.source.reader;
 
+import org.apache.avro.Schema;
 import org.apache.seatunnel.api.source.Collector;
 import org.apache.seatunnel.api.table.type.ArrayType;
 import org.apache.seatunnel.api.table.type.BasicType;
@@ -82,10 +83,11 @@ public class ParquetReadStrategy extends AbstractReadStrategy {
             String errorMsg = String.format("This file [%s] is not a parquet file, please check the format of this file", path);
             throw new FileConnectorException(FileConnectorErrorCode.FILE_TYPE_INVALID, errorMsg);
         }
+        String[] readColumns = seaTunnelRowType.getFieldNames();
         Path filePath = new Path(path);
         Map<String, String> partitionsMap = parsePartitionsByPath(path);
         HadoopInputFile hadoopInputFile = HadoopInputFile.fromPath(filePath, getConfiguration());
-        int fieldsCount = seaTunnelRowType.getTotalFields();
+
         GenericData dataModel = new GenericData();
         dataModel.addLogicalTypeConversion(new Conversions.DecimalConversion());
         dataModel.addLogicalTypeConversion(new TimeConversions.DateConversion());
@@ -96,19 +98,21 @@ public class ParquetReadStrategy extends AbstractReadStrategy {
                 .withDataModel(dataModel)
                 .build()) {
             while ((record = reader.read()) != null) {
-                Object[] fields;
+                List<Schema.Field> originList = record.getSchema().getFields();
+                int fieldsCount = originList.size();
+                Map<String, Object> valueMap = new HashMap<>(fieldsCount);
                 if (isMergePartition) {
-                    int index = fieldsCount;
-                    fields = new Object[fieldsCount + partitionsMap.size()];
-                    for (String value : partitionsMap.values()) {
-                        fields[index++] = value;
+                    for (String key : partitionsMap.keySet()) {
+                        valueMap.put(key, partitionsMap.get(key));
                     }
-                } else {
-                    fields = new Object[fieldsCount];
                 }
                 for (int i = 0; i < fieldsCount; i++) {
                     Object data = record.get(i);
-                    fields[i] = resolveObject(data, seaTunnelRowType.getFieldType(i));
+                    valueMap.put(originList.get(i).name(), data);
+                }
+                Object[] fields = new Object[readColumns.length];
+                for (int j = 0; j < readColumns.length; j++) {
+                    fields[j] = resolveObject(valueMap.get(readColumns[j]), seaTunnelRowType.getFieldType(j));
                 }
                 SeaTunnelRow seaTunnelRow = new SeaTunnelRow(fields);
                 output.collect(seaTunnelRow);
