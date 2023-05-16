@@ -21,6 +21,7 @@ import static org.apache.parquet.avro.AvroReadSupport.READ_INT96_AS_FIXED;
 import static org.apache.parquet.avro.AvroSchemaConverter.ADD_LIST_ELEMENT_RECORDS;
 import static org.apache.parquet.avro.AvroWriteSupport.WRITE_FIXED_AS_INT96;
 import static org.apache.parquet.avro.AvroWriteSupport.WRITE_OLD_LIST_STRUCTURE;
+import static org.apache.seatunnel.connectors.seatunnel.file.config.BaseSinkConfig.ORIGIN_COLUMNS;
 
 import org.apache.seatunnel.api.table.type.BasicType;
 import org.apache.seatunnel.api.table.type.SeaTunnelDataType;
@@ -66,6 +67,7 @@ public abstract class AbstractReadStrategy implements ReadStrategy {
     protected SeaTunnelRowType seaTunnelRowTypeWithPartition;
     protected Config pluginConfig;
     protected List<String> fileNames = new ArrayList<>();
+    protected List<String> originColumns = new ArrayList<>();
     protected boolean isMergePartition = true;
 
     @Override
@@ -129,6 +131,7 @@ public abstract class AbstractReadStrategy implements ReadStrategy {
         if (pluginConfig.hasPath(BaseSourceConfig.PARSE_PARTITION_FROM_PATH.key())) {
             isMergePartition = pluginConfig.getBoolean(BaseSourceConfig.PARSE_PARTITION_FROM_PATH.key());
         }
+        originColumns = pluginConfig.getStringList(ORIGIN_COLUMNS.key());
     }
 
     @Override

@@ -39,10 +39,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 @Builder
 public class TextDeserializationSchema implements DeserializationSchema<SeaTunnelRow> {
@@ -56,16 +53,33 @@ public class TextDeserializationSchema implements DeserializationSchema<SeaTunne
     private DateTimeUtils.Formatter dateTimeFormatter = DateTimeUtils.Formatter.YYYY_MM_DD_HH_MM_SS;
     @Builder.Default
     private TimeUtils.Formatter timeFormatter = TimeUtils.Formatter.HH_MM_SS;
+    @Builder.Default
+    private List<String> originColumns = null;
 
     @Override
     public SeaTunnelRow deserialize(byte[] message) throws IOException {
         String content = new String(message);
-        Map<Integer, String> splitsMap = splitLineBySeaTunnelRowType(content, seaTunnelRowType);
-        Object[] objects = new Object[seaTunnelRowType.getTotalFields()];
-        for (int i = 0; i < objects.length; i++) {
-            objects[i] = convert(splitsMap.get(i), seaTunnelRowType.getFieldType(i));
+        if (originColumns == null) {
+            Map<Integer, String> splitsMap = splitLineBySeaTunnelRowType(content, seaTunnelRowType);
+            //处理原始字段和输出字段
+            Object[] objects = new Object[seaTunnelRowType.getTotalFields()];
+            for (int i = 0; i < objects.length; i++) {
+                objects[i] = convert(splitsMap.get(i), seaTunnelRowType.getFieldType(i));
+            }
+            return new SeaTunnelRow(objects);
+        } else {
+            String[] sinkColumns = seaTunnelRowType.getFieldNames();
+            String[] splits = content.split(delimiter, -1);
+            Map<String, String> valueMap = new HashMap<>();
+            for (int index = 0;index<originColumns.size();index++) {
+                valueMap.put(originColumns.get(index), splits[index]);
+            }
+            Object[] objects = new Object[seaTunnelRowType.getTotalFields()];
+            for (int i = 0; i < sinkColumns.length; i++) {
+                objects[i] = convert(valueMap.get(sinkColumns[i]), seaTunnelRowType.getFieldType(i));
+            }
+            return new SeaTunnelRow(objects);
         }
-        return new SeaTunnelRow(objects);
     }
 
     @Override

@@ -17,11 +17,13 @@
 
 package org.apache.seatunnel.connectors.seatunnel.hive.source;
 
+import static org.apache.seatunnel.connectors.seatunnel.file.config.BaseSinkConfig.*;
 import static org.apache.seatunnel.connectors.seatunnel.hive.config.HiveConfig.ORC_INPUT_FORMAT_CLASSNAME;
 import static org.apache.seatunnel.connectors.seatunnel.hive.config.HiveConfig.PARQUET_INPUT_FORMAT_CLASSNAME;
 import static org.apache.seatunnel.connectors.seatunnel.hive.config.HiveConfig.TEXT_INPUT_FORMAT_CLASSNAME;
 import static org.apache.hadoop.fs.CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY;
 
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.seatunnel.api.common.PrepareFailException;
 import org.apache.seatunnel.api.common.SeaTunnelAPIErrorCode;
 import org.apache.seatunnel.api.source.SeaTunnelSource;
@@ -45,6 +47,9 @@ import org.apache.hadoop.hive.metastore.api.Table;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @AutoService(SeaTunnelSource.class)
 public class HiveSource extends BaseHdfsFileSource {
@@ -66,10 +71,18 @@ public class HiveSource extends BaseHdfsFileSource {
         }
         Pair<String[], Table> tableInfo = HiveConfig.getTableInfo(pluginConfig);
         tableInformation = tableInfo.getRight();
+        List<String> originColumns = tableInformation.getSd().getCols().stream()
+                .map(FieldSchema::getName)
+                .collect(Collectors.toList());
+        pluginConfig = pluginConfig.withValue(ORIGIN_COLUMNS.key(), ConfigValueFactory.fromAnyRef(originColumns));
         String inputFormat = tableInformation.getSd().getInputFormat();
         if (TEXT_INPUT_FORMAT_CLASSNAME.equals(inputFormat)) {
-            pluginConfig = pluginConfig.withValue(BaseSourceConfig.FILE_TYPE.key(),
-                    ConfigValueFactory.fromAnyRef(FileFormat.TEXT.toString()));
+            Map<String, String> parameters = tableInformation.getSd().getSerdeInfo().getParameters();
+            pluginConfig = pluginConfig.withValue(FILE_FORMAT.key(), ConfigValueFactory.fromAnyRef(FileFormat.TEXT.toString()))
+                    .withValue(BaseSourceConfig.FILE_TYPE.key(),
+                            ConfigValueFactory.fromAnyRef(FileFormat.TEXT.toString()))
+                    .withValue(BaseSourceConfig.DELIMITER.key(), ConfigValueFactory.fromAnyRef(parameters.get("field.delim")))
+                    .withValue(ROW_DELIMITER.key(), ConfigValueFactory.fromAnyRef(parameters.get("line.delim")));
         } else if (PARQUET_INPUT_FORMAT_CLASSNAME.equals(inputFormat)) {
             pluginConfig = pluginConfig.withValue(BaseSourceConfig.FILE_TYPE.key(),
                     ConfigValueFactory.fromAnyRef(FileFormat.PARQUET.toString()));
@@ -85,12 +98,21 @@ public class HiveSource extends BaseHdfsFileSource {
             URI uri = new URI(hdfsLocation);
             String path = uri.getPath();
             String defaultFs = hdfsLocation.replace(path, "");
-            pluginConfig = pluginConfig.withValue(BaseSourceConfig.FILE_PATH.key(), ConfigValueFactory.fromAnyRef(path))
-                .withValue(FS_DEFAULT_NAME_KEY, ConfigValueFactory.fromAnyRef(defaultFs));
+            pluginConfig =
+                    pluginConfig
+                            .withValue(
+                                    BaseSourceConfig.FILE_PATH.key(),
+                                    ConfigValueFactory.fromAnyRef(path))
+                            .withValue(
+                                    FS_DEFAULT_NAME_KEY, ConfigValueFactory.fromAnyRef(defaultFs));
         } catch (URISyntaxException e) {
-            String errorMsg = String.format("Get hdfs namenode host from table location [%s] failed," +
-                    "please check it", hdfsLocation);
-            throw new HiveConnectorException(HiveConnectorErrorCode.GET_HDFS_NAMENODE_HOST_FAILED, errorMsg, e);
+            String errorMsg =
+                    String.format(
+                            "Get hdfs namenode host from table location [%s] failed,"
+                                    + "please check it",
+                            hdfsLocation);
+            throw new HiveConnectorException(
+                    HiveConnectorErrorCode.GET_HDFS_NAMENODE_HOST_FAILED, errorMsg, e);
         }
         super.prepare(pluginConfig);
     }

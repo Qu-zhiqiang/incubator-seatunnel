@@ -40,7 +40,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
+
+import static org.apache.seatunnel.connectors.seatunnel.file.config.BaseSinkConfig.ORIGIN_COLUMNS;
 
 public class TextReadStrategy extends AbstractReadStrategy {
     private DeserializationSchema<SeaTunnelRow> deserializationSchema;
@@ -83,11 +86,13 @@ public class TextReadStrategy extends AbstractReadStrategy {
             deserializationSchema = TextDeserializationSchema.builder()
                     .seaTunnelRowType(this.seaTunnelRowTypeWithPartition)
                     .delimiter(String.valueOf('\002'))
+                    .originColumns(originColumns)
                     .build();
         } else {
             deserializationSchema = TextDeserializationSchema.builder()
                     .seaTunnelRowType(this.seaTunnelRowType)
                     .delimiter(String.valueOf('\002'))
+                    .originColumns(originColumns)
                     .build();
         }
         return getActualSeaTunnelRowTypeInfo();
@@ -119,6 +124,7 @@ public class TextReadStrategy extends AbstractReadStrategy {
                     .delimiter(fieldDelimiter)
                     .dateFormatter(dateFormat)
                     .dateTimeFormatter(datetimeFormat)
+                    .originColumns(originColumns)
                     .timeFormatter(timeFormat)
                     .build();
         } else {
@@ -128,6 +134,7 @@ public class TextReadStrategy extends AbstractReadStrategy {
                     .dateFormatter(dateFormat)
                     .dateTimeFormatter(datetimeFormat)
                     .timeFormatter(timeFormat)
+                    .originColumns(originColumns)
                     .build();
         }
     }
