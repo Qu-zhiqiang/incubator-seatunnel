@@ -44,7 +44,7 @@ public class ClickHouseDialect implements JdbcDialect {
 
     @Override
     public JdbcDialectTypeMapper getJdbcDialectTypeMapper() {
-        return new MySqlTypeMapper();
+        return new ClickHouseMapper();
     }
 
     @Override
