@@ -31,7 +31,6 @@ import org.apache.hudi.common.util.Option;
 import org.apache.hudi.config.*;
 import org.apache.hudi.index.HoodieIndex;
 import org.apache.seatunnel.api.sink.SinkWriter;
-import org.apache.seatunnel.api.table.type.BasicType;
 import org.apache.seatunnel.api.table.type.SeaTunnelRow;
 import org.apache.seatunnel.connectors.seatunnel.hudi.commit.HudiCommitInfo;
 import org.apache.seatunnel.connectors.seatunnel.hudi.config.HudiSinkConf;
@@ -39,6 +38,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -59,6 +64,9 @@ public class HudiSinkWriter implements SinkWriter<SeaTunnelRow, HudiCommitInfo, 
     private transient volatile boolean flushing = false;
     private final String tableFormat;
     private final Map<String, Integer> positionMap;
+    private final DateTimeFormatter FORMAT_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final DateTimeFormatter FORMAT_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
 
 
     public HudiSinkWriter(HudiSinkConf sinkConf, SinkWriter.Context context) throws IOException {
@@ -86,7 +94,7 @@ public class HudiSinkWriter implements SinkWriter<SeaTunnelRow, HudiCommitInfo, 
                 .forTable(sinkConf.getTable())
                 .build();
         org.apache.hadoop.conf.Configuration conf = new org.apache.hadoop.conf.Configuration();
-        conf.set("fs.defaultFS", "HDFS");
+        conf.set("fs.defaultFS", sinkConf.getDefaultFS());
         conf.set("fs.hdfs.impl", "org.apache.hadoop.hdfs.DistributedFileSystem");
         this.hudiClient = new HoodieJavaWriteClient<>(new HoodieJavaEngineContext(conf), huDiWriteConf);
         this.queue = new ConcurrentLinkedQueue<>();
@@ -154,6 +162,8 @@ public class HudiSinkWriter implements SinkWriter<SeaTunnelRow, HudiCommitInfo, 
                 return "long";
             case "string":
             case "varchar":
+            case "timestamp":
+            case "date":
                 return "string";
             case "int":
                 return "int";
@@ -166,7 +176,7 @@ public class HudiSinkWriter implements SinkWriter<SeaTunnelRow, HudiCommitInfo, 
             case "byte":
                 return "byte";
             default:
-                throw new RuntimeException("暂不支持" + type);
+                return type;
         }
     }
 
@@ -201,10 +211,21 @@ public class HudiSinkWriter implements SinkWriter<SeaTunnelRow, HudiCommitInfo, 
             Object id = getValueByName(row, sinkConf.getPrimaryKeys());
             GenericRecord genericRecord = new GenericData.Record(avroSchema);
             for (String key : sinkConf.getFields().keySet()) {
-                genericRecord.put(key, getValueByName(row, key));
+                Object obj = getValueByName(row, key);
+                if (obj instanceof LocalDate) {
+                    LocalDate localDate = (LocalDate)obj;
+                    obj =  localDate.format(FORMAT_DATE);
+                } else if (obj instanceof LocalDateTime) {
+                    LocalDateTime localDateTime = (LocalDateTime)obj;
+                    obj =  localDateTime.format(FORMAT_TIME);
+                } else if (obj instanceof LocalTime) {
+                    LocalTime localTime = (LocalTime)obj;
+                    obj =  localTime.format(FORMAT_TIME);
+                }
+                genericRecord.put(key, obj);
             }
-            HoodieKey hoodieKey = new HoodieKey(String.valueOf(id), sinkConf.getPartitionKeys().stream().map(
-                    p->String.format("%s=%s",p, getValueByName(row, p))).collect(Collectors.joining("/")));
+            HoodieKey hoodieKey = new HoodieKey(String.valueOf(id), sinkConf.getPartitionKeys() == null ? "" :sinkConf.getPartitionKeys().stream().map(
+                    p->String.format("%s=%s",p,  genericRecord.get(p))).collect(Collectors.joining("/")));
             HoodieAvroPayload payload = new HoodieAvroPayload(Option.of(genericRecord));
             return new HoodieAvroRecord<>(hoodieKey, payload).newInstance();
         }).collect(Collectors.toList());
@@ -231,7 +252,7 @@ public class HudiSinkWriter implements SinkWriter<SeaTunnelRow, HudiCommitInfo, 
         if (!closed) {
             closed = true;
             if (this.scheduledFuture != null) {
-                scheduledFuture.cancel(false);
+                scheduledFuture.cancel(true);
                 this.scheduler.shutdown();
             }
             try {

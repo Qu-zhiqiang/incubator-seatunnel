@@ -20,6 +20,7 @@ public class HudiSinkConf implements Serializable {
     private String schema;
     private String table;
     private String tablePath;
+    private String defaultFS;
     private int parallelism = 1;
     private String primaryKeys;
     private List<String> partitionKeys;

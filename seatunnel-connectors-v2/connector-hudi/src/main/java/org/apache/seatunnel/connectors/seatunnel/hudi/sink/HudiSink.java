@@ -21,10 +21,7 @@ import com.google.auto.service.AutoService;
 import org.apache.seatunnel.api.common.PrepareFailException;
 import org.apache.seatunnel.api.sink.SeaTunnelSink;
 import org.apache.seatunnel.api.sink.SinkWriter;
-import org.apache.seatunnel.api.table.type.BasicType;
-import org.apache.seatunnel.api.table.type.SeaTunnelDataType;
-import org.apache.seatunnel.api.table.type.SeaTunnelRow;
-import org.apache.seatunnel.api.table.type.SeaTunnelRowType;
+import org.apache.seatunnel.api.table.type.*;
 import org.apache.seatunnel.connectors.seatunnel.hudi.commit.HudiCommitInfo;
 import org.apache.seatunnel.connectors.seatunnel.hudi.commit.HudiSinkAggregatedCommitter;
 import org.apache.seatunnel.connectors.seatunnel.hudi.config.HudiSinkConf;
@@ -49,16 +46,30 @@ public class HudiSink implements SeaTunnelSink<SeaTunnelRow, HudiSinkState, Hudi
         String schema = pluginConfig.getString("schema");
         String table = pluginConfig.getString("table");
         String primaryKeys = pluginConfig.getString("primaryKeys");
-        String partitionKeys = pluginConfig.getString("partitionKeys");
+        String defaultFS = pluginConfig.getString("defaultFS");
+        String partitionKeys = null;
+        if (pluginConfig.hasPath("partitionKeys")) {
+            partitionKeys = pluginConfig.getString("partitionKeys");
+        }
         String tablePath = pluginConfig.getString("tablePath");
         String fields = pluginConfig.getString("fields");
         String fieldTypes = pluginConfig.getString("field.types");
-        String flushMaxSize = Optional.ofNullable(pluginConfig.getString("flushMaxSize")).orElse("1000");
-        String flushIntervalMills = Optional.ofNullable(pluginConfig.getString("flushIntervalMills")).orElse("3000");
-        sinkConf =  HudiSinkConf.builder().schema(schema).table(table).primaryKeys(primaryKeys).flushMaxSize(Integer.parseInt(flushMaxSize))
+        String flushMaxSize = "1000";
+        if (pluginConfig.hasPath("flushMaxSize")) {
+            flushMaxSize = pluginConfig.getString("flushMaxSize");
+        }
+        String flushIntervalMills = "3000";
+        if (pluginConfig.hasPath("flushIntervalMills")) {
+            flushIntervalMills = pluginConfig.getString("flushIntervalMills");
+        }
+        sinkConf =  HudiSinkConf.builder().schema(schema).table(table).primaryKeys(primaryKeys)
+                .defaultFS(defaultFS)
+                .flushMaxSize(Integer.parseInt(flushMaxSize))
                 .flushIntervalMills(Long.parseLong(flushIntervalMills))
-                .tablePath(tablePath)
-                .partitionKeys(Arrays.asList(partitionKeys.split(",", -1))).build();
+                .tablePath(tablePath).build();
+        if (partitionKeys != null) {
+            sinkConf.setPartitionKeys(Arrays.asList(partitionKeys.split(",", -1)));
+        }
         String[] filedArray = fields.split(",", -1);
         String[] fieldTypeArray = fieldTypes.split(",", -1);
         Map<String, String> fieldsMap = new LinkedHashMap<>();
@@ -94,6 +105,7 @@ public class HudiSink implements SeaTunnelSink<SeaTunnelRow, HudiSinkState, Hudi
             case "string":
             case "timestamp":
             case "varchar":
+            case "date":
                 return BasicType.STRING_TYPE;
             case "int":
                 return BasicType.INT_TYPE;
