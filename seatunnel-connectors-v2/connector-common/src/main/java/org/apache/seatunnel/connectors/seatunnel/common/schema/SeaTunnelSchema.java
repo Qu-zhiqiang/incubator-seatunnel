@@ -27,7 +27,6 @@ import org.apache.seatunnel.api.table.type.MapType;
 import org.apache.seatunnel.api.table.type.PrimitiveByteArrayType;
 import org.apache.seatunnel.api.table.type.SeaTunnelDataType;
 import org.apache.seatunnel.api.table.type.SeaTunnelRowType;
-import org.apache.seatunnel.api.table.type.SqlType;
 import org.apache.seatunnel.common.config.CheckConfigUtil;
 import org.apache.seatunnel.common.config.CheckResult;
 import org.apache.seatunnel.common.utils.JsonUtils;
@@ -152,6 +151,8 @@ public class SeaTunnelSchema implements Serializable {
                 SeaTunnelDataType<?> dataType = parseTypeByString(genericType);
                 switch(dataType.getSqlType()) {
                     case STRING:
+                    case VARCHAR:
+                    case VARCHAR2:
                         return ArrayType.STRING_ARRAY_TYPE;
                     case BOOLEAN:
                         return ArrayType.BOOLEAN_ARRAY_TYPE;
@@ -174,6 +175,8 @@ public class SeaTunnelSchema implements Serializable {
             case MAP:
                 return new MapType<>(parseTypeByString(keyGenericType), parseTypeByString(valueGenericType));
             case STRING:
+            case VARCHAR:
+            case VARCHAR2:
                 return BasicType.STRING_TYPE;
             case BOOLEAN:
                 return BasicType.BOOLEAN_TYPE;

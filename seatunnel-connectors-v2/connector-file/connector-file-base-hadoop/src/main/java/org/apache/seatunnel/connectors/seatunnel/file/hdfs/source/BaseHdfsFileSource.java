@@ -36,6 +36,7 @@ import org.apache.seatunnel.connectors.seatunnel.file.source.reader.ReadStrategy
 import org.apache.seatunnel.shade.com.typesafe.config.Config;
 
 import java.io.IOException;
+import java.util.Map;
 
 public abstract class BaseHdfsFileSource extends BaseFileSource {
 

@@ -15,29 +15,15 @@
  * limitations under the License.
  */
 
-package org.apache.seatunnel.api.table.type;
+package org.apache.seatunnel.connectors.seatunnel.jdbc.internal.dialect.clickhouse;
 
-/**
- * The sql type of {@link SeaTunnelDataType}.
- */
-public enum SqlType {
-    ARRAY,
-    MAP,
-    STRING,
-    VARCHAR,
-    VARCHAR2,
-    BOOLEAN,
-    TINYINT,
-    SMALLINT,
-    INT,
-    BIGINT,
-    FLOAT,
-    DOUBLE,
-    DECIMAL,
-    NULL,
-    BYTES,
-    DATE,
-    TIME,
-    TIMESTAMP,
-    ROW;
+import org.apache.seatunnel.connectors.seatunnel.jdbc.internal.converter.AbstractJdbcRowConverter;
+
+public class ClickHouseJdbcRowConverter extends AbstractJdbcRowConverter {
+
+    @Override
+    public String converterName() {
+        return "ClickHouse";
+    }
+
 }

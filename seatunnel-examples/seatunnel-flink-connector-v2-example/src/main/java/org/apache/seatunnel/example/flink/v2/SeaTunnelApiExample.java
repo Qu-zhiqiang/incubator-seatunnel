@@ -33,7 +33,7 @@ public class SeaTunnelApiExample {
     public static void main(String[] args) throws FileNotFoundException, URISyntaxException, CommandException {
         System.setProperty("SEATUNNEL_HOME","D:\\work\\seatunnel");
         System.setProperty("HADOOP_USER_NAME","hdfs");
-        String configurePath = args.length > 0 ?  args[0] : "/examples/hudi.conf";
+        String configurePath = args.length > 0 ?  args[0] : "/examples/hive_to_mysql.conf";
         String configFile = getTestConfigFile(configurePath);
         FlinkCommandArgs flinkCommandArgs = new FlinkCommandArgs();
         flinkCommandArgs.setConfigFile(configFile);

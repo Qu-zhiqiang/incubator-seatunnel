@@ -15,36 +15,33 @@
  * limitations under the License.
  */
 
-package org.apache.seatunnel.connectors.seatunnel.jdbc.internal.dialect.clickhouse;
+package org.apache.seatunnel.connectors.seatunnel.jdbc.internal.dialect.inceptor;
 
+import org.apache.seatunnel.connectors.seatunnel.jdbc.config.JdbcSourceOptions;
 import org.apache.seatunnel.connectors.seatunnel.jdbc.internal.converter.JdbcRowConverter;
 import org.apache.seatunnel.connectors.seatunnel.jdbc.internal.dialect.JdbcDialect;
 import org.apache.seatunnel.connectors.seatunnel.jdbc.internal.dialect.JdbcDialectTypeMapper;
-import org.apache.seatunnel.connectors.seatunnel.jdbc.internal.dialect.mysql.MySqlTypeMapper;
 import org.apache.seatunnel.connectors.seatunnel.jdbc.internal.dialect.mysql.MysqlJdbcRowConverter;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Arrays;
+import java.sql.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-public class ClickHouseDialect implements JdbcDialect {
+public class InceptorDialect implements JdbcDialect {
     @Override
     public String dialectName() {
-        return "ClickHouse";
+        return "Inceptor";
     }
 
     @Override
     public JdbcRowConverter getRowConverter() {
-        return new ClickHouseJdbcRowConverter();
+        return new InceptorJdbcRowConverter();
     }
 
     @Override
     public JdbcDialectTypeMapper getJdbcDialectTypeMapper() {
-        return new ClickHouseMapper();
+        return new InceptorMapper();
     }
 
     @Override
@@ -63,5 +60,11 @@ public class ClickHouseDialect implements JdbcDialect {
         PreparedStatement statement = connection.prepareStatement(queryTemplate, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
         statement.setFetchSize(Integer.MIN_VALUE);
         return statement;
+    }
+
+    @Override
+    public ResultSetMetaData getResultSetMetaData(Connection conn, JdbcSourceOptions jdbcSourceOptions) throws SQLException {
+        PreparedStatement ps = conn.prepareStatement(jdbcSourceOptions.getQuery());
+        return ps.executeQuery().getMetaData();
     }
 }

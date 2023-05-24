@@ -44,6 +44,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -217,7 +218,7 @@ public class HudiSinkWriter implements SinkWriter<SeaTunnelRow, HudiCommitInfo, 
                     obj =  localDate.format(FORMAT_DATE);
                 } else if (obj instanceof LocalDateTime) {
                     LocalDateTime localDateTime = (LocalDateTime)obj;
-                    obj =  localDateTime.format(FORMAT_TIME);
+                    obj =  localDateTime.truncatedTo(ChronoUnit.SECONDS).format(FORMAT_TIME);
                 } else if (obj instanceof LocalTime) {
                     LocalTime localTime = (LocalTime)obj;
                     obj =  localTime.format(FORMAT_TIME);

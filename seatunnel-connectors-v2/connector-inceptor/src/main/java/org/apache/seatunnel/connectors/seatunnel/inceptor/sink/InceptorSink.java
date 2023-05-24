@@ -22,10 +22,8 @@ import org.apache.commons.lang3.RandomUtils;
 import org.apache.seatunnel.api.common.PrepareFailException;
 import org.apache.seatunnel.api.sink.SeaTunnelSink;
 import org.apache.seatunnel.api.sink.SinkWriter;
-import org.apache.seatunnel.api.table.type.BasicType;
-import org.apache.seatunnel.api.table.type.SeaTunnelDataType;
-import org.apache.seatunnel.api.table.type.SeaTunnelRow;
-import org.apache.seatunnel.api.table.type.SeaTunnelRowType;
+import org.apache.seatunnel.api.table.type.*;
+import org.apache.seatunnel.common.exception.CommonErrorCode;
 import org.apache.seatunnel.connectors.seatunnel.inceptor.commit.InceptorCommitInfo;
 import org.apache.seatunnel.connectors.seatunnel.inceptor.commit.InceptorSinkAggregatedCommitter;
 import org.apache.seatunnel.connectors.seatunnel.inceptor.config.InceptorSinkConf;
@@ -115,23 +113,32 @@ public class InceptorSink implements SeaTunnelSink<SeaTunnelRow, InceptorSinkSta
 
     private SeaTunnelDataType<?> convertType(String type){
         switch (type.toLowerCase()){
+            case "varchar":
+            case "varchar2":
+            case "string":
+                return BasicType.STRING_TYPE;
+            case "char":
+                return BasicType.BYTE_TYPE;
             case "bigint":
                 return BasicType.LONG_TYPE;
-            case "string":
-            case "varchar":
-                return BasicType.STRING_TYPE;
             case "int":
                 return BasicType.INT_TYPE;
-            case "double":
-                return BasicType.DOUBLE_TYPE;
-            case "float":
-                return BasicType.FLOAT_TYPE;
-            case "short":
+            case "datetime": return LocalTimeType.LOCAL_DATE_TIME_TYPE;
+            case "date": return LocalTimeType.LOCAL_DATE_TYPE;
+            case "tinyint":
+            case "smallint":
                 return BasicType.SHORT_TYPE;
-            case "byte":
-                return BasicType.BYTE_TYPE;
+            case "float": return BasicType.FLOAT_TYPE;
+            case "double":
+            case "decimal":
+            case "number":
+                return BasicType.DOUBLE_TYPE;
+            case "boolean":
+                return BasicType.BOOLEAN_TYPE;
+            case "timestamp":
+                return LocalTimeType.LOCAL_TIME_TYPE;
             default:
-                throw new RuntimeException("暂不支持" + type);
+                throw new RuntimeException("暂不支持Inceptor类型:" + type);
         }
     }
 

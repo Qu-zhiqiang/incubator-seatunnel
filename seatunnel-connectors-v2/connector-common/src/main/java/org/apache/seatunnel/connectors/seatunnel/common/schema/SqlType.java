@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-package org.apache.seatunnel.api.table.type;
+package org.apache.seatunnel.connectors.seatunnel.common.schema;
+
+import org.apache.seatunnel.api.table.type.SeaTunnelDataType;
 
 /**
  * The sql type of {@link SeaTunnelDataType}.

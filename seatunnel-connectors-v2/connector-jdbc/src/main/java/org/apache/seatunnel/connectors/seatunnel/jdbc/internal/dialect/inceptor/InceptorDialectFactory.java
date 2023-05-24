@@ -15,29 +15,23 @@
  * limitations under the License.
  */
 
-package org.apache.seatunnel.api.table.type;
+package org.apache.seatunnel.connectors.seatunnel.jdbc.internal.dialect.inceptor;
 
-/**
- * The sql type of {@link SeaTunnelDataType}.
- */
-public enum SqlType {
-    ARRAY,
-    MAP,
-    STRING,
-    VARCHAR,
-    VARCHAR2,
-    BOOLEAN,
-    TINYINT,
-    SMALLINT,
-    INT,
-    BIGINT,
-    FLOAT,
-    DOUBLE,
-    DECIMAL,
-    NULL,
-    BYTES,
-    DATE,
-    TIME,
-    TIMESTAMP,
-    ROW;
+import com.google.auto.service.AutoService;
+import org.apache.seatunnel.connectors.seatunnel.jdbc.internal.dialect.JdbcDialect;
+import org.apache.seatunnel.connectors.seatunnel.jdbc.internal.dialect.JdbcDialectFactory;
+
+/** Factory for {@link InceptorDialect}. */
+
+@AutoService(JdbcDialectFactory.class)
+public class InceptorDialectFactory implements JdbcDialectFactory {
+    @Override
+    public boolean acceptsURL(String url) {
+        return url.startsWith("jdbc:transwarp2:");
+    }
+
+    @Override
+    public JdbcDialect create() {
+        return new InceptorDialect();
+    }
 }
