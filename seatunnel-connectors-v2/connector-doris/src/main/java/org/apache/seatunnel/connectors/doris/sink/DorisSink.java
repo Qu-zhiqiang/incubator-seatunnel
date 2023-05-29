@@ -55,7 +55,7 @@ public class DorisSink extends AbstractSimpleSink<SeaTunnelRow, Void> {
     @Override
     public void prepare(Config pluginConfig) throws PrepareFailException {
         this.pluginConfig = pluginConfig;
-        CheckResult result = CheckConfigUtil.checkAllExists(pluginConfig, NODE_URLS.key(), DATABASE.key(), TABLE.key(), USERNAME.key(), PASSWORD.key());
+        CheckResult result = CheckConfigUtil.checkAllExists(pluginConfig, NODE_URLS.key(), DATABASE.key(), TABLE.key(), USERNAME.key());
         if (!result.isSuccess()) {
             throw new DorisConnectorException(SeaTunnelAPIErrorCode.CONFIG_VALIDATION_FAILED,
                     String.format("PluginName: %s, PluginType: %s, Message: %s",
